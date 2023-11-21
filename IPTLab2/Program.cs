@@ -19,7 +19,7 @@ while(answer != "0")
     switch (answer)
     {
         case "1":
-            Console.WriteLine("Sorry, it's not implemented yet");
+            RandGenMenu.Open();
             break;
         case "2":
             HashingMenu.Open();
