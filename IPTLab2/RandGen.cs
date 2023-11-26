@@ -150,7 +150,7 @@ namespace IPTLab2
             }
 
             StreamWriter sw = new StreamWriter(filename + ".txt");
-            sw.Write("Set: [");
+            sw.Write("Set: [ ");
             foreach(var num in set)
             {
                 sw.Write(Convert.ToString(num) + " ");
