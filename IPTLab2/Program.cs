@@ -5,7 +5,7 @@ string answer = "";
 
 while(answer != "0")
 {
-    Console.Write("Generate a set(1), Generate hash(2), exit(0) | ");
+    Console.Write("Generate a set(1), Generate hash(2), Encrypt or decrypt a file(3), exit(0) | ");
     answer = Console.ReadLine();
 
     string[] allowed = { "1", "2", "3", "0" };
