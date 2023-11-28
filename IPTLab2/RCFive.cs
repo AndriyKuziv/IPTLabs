@@ -8,14 +8,15 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Xsl;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPTLab2
 {
     public class EncrParams
     {
-        public int WordSize { get; set; }
-        public int Rounds { get; set; }
-        public int KeySize { get; set; }
+        public int wordSize { get; set; }
+        public int rounds { get; set; }
+        public int keySize { get; set; }
 
         public long MaxFileSize { get; set; }
     }
@@ -41,19 +42,19 @@ namespace IPTLab2
             else
             {
                 maxFileSize = encrParams.MaxFileSize;
-                wordSize = encrParams.WordSize;
-                rounds = encrParams.Rounds;
-                keySize = encrParams.KeySize;
+                wordSize = encrParams.wordSize;
+                rounds = encrParams.rounds;
+                keySize = encrParams.keySize;
             }
 
             string answer = "";
 
-            while(answer != "0")
+            while (answer != "0")
             {
                 Console.Write("\nDo you want to ecnrypt a file(1), decrypt(2) or exit(0)? | ");
                 answer = Console.ReadLine();
-                
-                string[] answers = { "1", "2", "0"};
+
+                string[] answers = { "1", "2", "0" };
                 while (!answers.Contains(answer))
                 {
                     Console.WriteLine("Please enter a valid answer");
@@ -61,7 +62,7 @@ namespace IPTLab2
                     answer = Console.ReadLine();
                 }
 
-                switch(answer)
+                switch (answer)
                 {
                     case "1":
                         EncryptFile();
@@ -75,6 +76,13 @@ namespace IPTLab2
 
         public static void EncryptFile()
         {
+            var genPars = FileWorksRandGen.ReadConfig(RandGenMenu.configFilePath);
+            if (genPars is null)
+            {
+                Console.WriteLine("Error! Encryption is not possible. Config file for generator does not exist");
+                return;
+            }
+
             string filename = "";
             Console.Write("Please enter a name of a file to encrypt: ");
             filename = Console.ReadLine();
@@ -96,14 +104,11 @@ namespace IPTLab2
             password = HashingAlgo.HashText(password);
 
             RC5 rc = new RC5(password, wordSize, rounds, keySize);
-
-            var plaintext = FileWorksRC.ReadFile(filename);
-
-            var ciphertext = rc.Encrypt(plaintext);
+            var ct = rc.EncryptFile(filename);
 
             Console.WriteLine("\nSaving encrypted file...\n");
             string newFilename = filename + encryptionExtension;
-            FileWorksRC.SaveFile(ciphertext, newFilename);
+            FileWorksRC.SaveFile(ct, newFilename);
         }
 
         public static void DecryptFile()
@@ -129,30 +134,28 @@ namespace IPTLab2
             password = HashingAlgo.HashText(password);
 
             RC5 rc = new RC5(password, wordSize, rounds, keySize);
-
-            var cyphertext = FileWorksRC.ReadFile(filename);
-
-            var plaintext = rc.Decrypt(cyphertext);
+            var pt = rc.DecryptFile(filename);
 
             Console.WriteLine("\nSaving decrypted file...\n");
             string newFilename = "decoded_" + filename.Substring(0, filename.Length - encryptionExtension.Length);
-            FileWorksRC.SaveFile(plaintext, newFilename);
+            FileWorksRC.SaveFile(pt, newFilename);
         }
 
     }
 
     public class RC5
     {
-        private readonly int WordSize = 32;
-        private readonly int Rounds = 20;
-        private readonly int KeySize = 16;
+        private readonly int wordSize = 32;
+        private readonly int rounds = 20;
+        private readonly int keySize = 16;
+
+        private readonly int blockSize = 8;
 
         private uint[] S;
-        private uint[] P;
 
         public RC5(byte[] key)
         {
-            if (key.Length != KeySize) Setup(key[..KeySize]);
+            if (key.Length != keySize) Setup(key[..keySize]);
             else Setup(key);
         }
 
@@ -160,7 +163,7 @@ namespace IPTLab2
         {
             byte[] key = Encoding.UTF8.GetBytes(password);
 
-            if (key.Length != KeySize) Setup(key[..KeySize]);
+            if (key.Length != keySize) Setup(key[..keySize]);
             else Setup(key);
         }
 
@@ -168,129 +171,179 @@ namespace IPTLab2
         {
             byte[] key = Encoding.UTF8.GetBytes(password);
 
-            if (key.Length != KeySize) key = key[..KeySize];
+            if (key.Length != keySize) key = key[..keySize];
             else Setup(key);
 
             Setup(key);
 
-            WordSize = wordSize;
-            Rounds = rounds;
-            KeySize = keySize;
+            this.wordSize = wordSize;
+            this.rounds = rounds;
+            this.keySize = keySize;
+            this.blockSize = wordSize / 8 * 2;
         }
 
         private void Setup(byte[] key)
         {
-            int c = key.Length / 4;
-            int t = 2 * (Rounds + 1);
+            int c = key.Length / (wordSize / 8);
+            int t = 2 * (rounds + 1);
+
             S = new uint[t];
-            P = new uint[t];
 
-            for (int i = 0; i < t; i++)
+            // Initialize S with a magic constant Pw and Qw
+            uint Pw = 0xb7e15163;
+            uint Qw = 0x9e3779b9;
+
+            S[0] = Pw;
+            for (int kk = 1; kk < t; kk++)
             {
-                P[i] = 0;
-                S[i] = 0;
+                S[kk] = S[kk - 1] + Qw;
             }
 
-            for (int i = 0, j = 0; i < t; i++)
+            // Key Expansion
+            int iA = 0;
+            int iB = 0;
+            uint[] L = new uint[c * 3];
+            for (int k = 0; k < c * 3; k++)
             {
-                uint temp = (P[i % c] << WordSize) | P[i % c] >> (32 - WordSize);
-                P[i] = temp + (uint)i;
+                uint A = BitConverter.ToUInt32(key, iA);
+                uint B = BitConverter.ToUInt32(key, iB);
+
+                L[k] = A + B;
+                iA = (iA + 4) % key.Length;
+                iB = (iB + 4) % key.Length;
             }
 
-            int a = 0, b = 0;
-            uint x = 0, y = 0;
-
-            for (int k = 0, i = 0, j = 0; k < 3 * Math.Max(t, c); k++)
+            int i = 0, j = 0;
+            for (int k = 0; k < 3 * Math.Max(t, c); k++)
             {
-                x = P[i] = (P[i] + x + y) << 3;
-                y = S[j] = (S[j] + x + y) << (int)(x + y);
+                S[i] = ROTL((S[i] + L[j]), 3);
                 i = (i + 1) % t;
                 j = (j + 1) % c;
             }
         }
 
-        public byte[] Encrypt(byte[] data)
+        private uint ROTL(uint val, int shift)
         {
-            int padding = (KeySize * 2) - (data.Length % (KeySize * 2));
-            byte[] paddedData = new byte[data.Length + padding];
-            Buffer.BlockCopy(data, 0, paddedData, 0, data.Length);
+            return (val << shift) | (val >> (wordSize - shift));
+        }
 
-            paddedData[^1] = (byte)padding;
+        private uint ROTR(uint val, int shift)
+        {
+            return (val >> shift) | (val << (wordSize - shift));
+        }
 
-            uint[] buffer = new uint[paddedData.Length / 4];
-            Buffer.BlockCopy(paddedData, 0, buffer, 0, paddedData.Length);
+        public byte[] EncryptFile(string filename)
+        {
+            var pt = FileWorksRC.ReadFile(filename);
 
-            for (int i = 0; i < buffer.Length; i += 2)
+            int paddedLength = (pt.Length % blockSize == 0) ? pt.Length : 
+                pt.Length + (blockSize - (pt.Length % blockSize));
+            
+            byte[] paddedData = new byte[paddedLength];
+            Array.Copy(pt, paddedData, pt.Length);
+
+            var genPars = FileWorksRandGen.ReadConfig(RandGenMenu.configFilePath);
+            byte[] iv = GetIV(genPars, blockSize);
+
+            byte[] encryptedData = new byte[paddedLength + blockSize];
+            iv.CopyTo(encryptedData, 0);
+
+            byte[] prevBlock = new byte[blockSize];
+            iv.CopyTo(prevBlock, 0);
+
+            for (int i = 0; i < paddedLength; i += blockSize)
             {
-                uint a = buffer[i];
-                uint b = buffer[i + 1];
-                a += S[0];
-                b += S[1];
+                byte[] currBlock = new byte[blockSize];
+                Array.Copy(paddedData, i, currBlock, 0, blockSize);
 
-                for (int round = 1; round <= Rounds; round++)
+                for (int j = 0; j < 8; j++)
                 {
-                    a = ((a ^ b) << (int)b | (a ^ b) >> (int)(32 - b)) + S[2 * round];
-                    b = ((b ^ a) << (int)a | (b ^ a) >> (int)(32 - a)) + S[2 * round + 1];
+                    currBlock[j] ^= prevBlock[j];
                 }
 
-                buffer[i] = a;
-                buffer[i + 1] = b;
+                byte[] encryptedBlock = Encrypt(currBlock);
+                encryptedBlock.CopyTo(prevBlock, 0);
+
+                //Array.Copy(encryptedBlock, 0, encryptedData, i, blockSize);
+                encryptedBlock.CopyTo(encryptedData, i + blockSize);
             }
 
-            byte[] result = new byte[buffer.Length * 4];
-            Buffer.BlockCopy(buffer, 0, result, 0, result.Length);
-            return result;
+            return encryptedData;
+        }
+        private byte[] Encrypt(byte[] block)
+        {
+            uint A = BitConverter.ToUInt32(block, 0);
+            uint B = BitConverter.ToUInt32(block, 4);
+
+            A += S[0];
+            B += S[1];
+
+            for (int i = 1; i <= rounds; i++)
+            {
+                A = ROTL(A ^ B, (int)B) + S[2 * i];
+                B = ROTL(B ^ A, (int)A) + S[2 * i + 1];
+            }
+
+            byte[] encryptedBlock = new byte[blockSize];
+            BitConverter.GetBytes(A).CopyTo(encryptedBlock, 0);
+            BitConverter.GetBytes(B).CopyTo(encryptedBlock, 4);
+
+            return encryptedBlock;
         }
 
-        public byte[] Decrypt(byte[] data)
+        public byte[] DecryptFile(string filename)
         {
-            // Perform decryption on the data
-            uint[] buffer = new uint[data.Length / 4];
-            Buffer.BlockCopy(data, 0, buffer, 0, data.Length);
+            var ct = FileWorksRC.ReadFile(filename);
 
-            for (int i = 0; i < buffer.Length; i += 2)
+            byte[] iv = new byte[blockSize];
+            Array.Copy(ct, 0, iv, 0, blockSize);
+
+            byte[] decryptedData = new byte[ct.Length - blockSize];
+            byte[] prevBlock = iv;
+
+            for (int i = blockSize; i < ct.Length; i += blockSize)
             {
-                uint a = buffer[i];
-                uint b = buffer[i + 1];
+                byte[] currBlock = new byte[blockSize];
+                Array.Copy(ct, i, currBlock, 0, blockSize);
 
-                for (int round = Rounds; round > 0; round--)
+                byte[] decryptedBlock = Decrypt(currBlock);
+
+                for (int j = 0; j < blockSize; j++)
                 {
-                    b = ((b - S[2 * round + 1]) >> (int)a | (b - S[2 * round + 1]) << (32 - (int)a)) ^ a;
-                    a = ((a - S[2 * round]) >> (int)b | (a - S[2 * round]) << (32 - (int)b)) ^ b;
+                    decryptedBlock[j] ^= prevBlock[j];
                 }
 
-                b -= S[1];
-                a -= S[0];
+                currBlock.CopyTo(prevBlock, 0);
 
-                buffer[i] = a;
-                buffer[i + 1] = b;
+                decryptedBlock.CopyTo(decryptedData, i - blockSize);
             }
 
-            // Retrieve the actual padding from the last byte of the decrypted data
-            int padding = (int)(buffer[buffer.Length - 1] & 0xFF);
-            byte[] result = new byte[data.Length - padding];
-            Buffer.BlockCopy(buffer, 0, result, 0, result.Length);
-            return result;
+            return decryptedData;
         }
-
-
-        public uint[] Unpad(uint[] bytes)
+        private byte[] Decrypt(byte[] block)
         {
-            int padLength = (int)(bytes[^1] & 0xFF);
+            uint A = BitConverter.ToUInt32(block, 0);
+            uint B = BitConverter.ToUInt32(block, 4);
 
-            return bytes[..^padLength];
-        }
-
-        public byte[] Pad(byte[] bytes)
-        {
-            int padLength = ((int)KeySize * 2) - (bytes.Length % ((int)KeySize * 2));
-
-            byte[] newArr = new byte[bytes.Length + padLength];
-            for (int i = 0; i < bytes.Length; i++)
+            for (int i = rounds; i > 0; i--)
             {
-                newArr[i] = bytes[i];
+                B = ROTR(B - S[2 * i + 1], (int)A) ^ A;
+                A = ROTR(A - S[2 * i], (int)B) ^ B;
             }
-            return newArr;
+
+            B -= S[1];
+            A -= S[0];
+
+            byte[] decryptedBlock = new byte[blockSize];
+            BitConverter.GetBytes(A).CopyTo(decryptedBlock, 0);
+            BitConverter.GetBytes(B).CopyTo(decryptedBlock, 4);
+
+            return decryptedBlock;
+        }
+
+        private byte[] GetIV(Parameters pars, long length)
+        {
+            return RandGen.GenerBytes(pars, length);
         }
     }
 

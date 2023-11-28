@@ -20,10 +20,10 @@ namespace IPTLab2
 
     public static class RandGenMenu
     {
-        private static readonly string _configFilePath = "equation.json";
+        public static readonly string configFilePath = "equation.json";
         public static void Open()
         {
-            var pars = FileWorksRandGen.ReadConfig(_configFilePath);
+            var pars = FileWorksRandGen.ReadConfig(configFilePath);
 
             Console.WriteLine("\n--------------------");
             Console.WriteLine("m: {0}; a: {1}; c: {2}; x0: {3}", pars.m, pars.a, pars.c, pars.x0);
@@ -116,6 +116,22 @@ namespace IPTLab2
             }
 
             return new KeyValuePair<List<long>, long>(res, period);
+        }
+
+        public static byte[] GenerBytes(Parameters pars, long numCount)
+        {
+            long x = pars.x0;
+
+            List<long> res = new List<long> { x };
+            byte[] bytes = new byte[numCount];
+            for (int i = 0; i < numCount - 1; i++)
+            {
+                x = nextXn(pars.a, x, pars.c, pars.m);
+                res.Add(x);
+                bytes[i] = (byte)(res[i] % 256);
+            }
+
+            return bytes;
         }
     }
 
