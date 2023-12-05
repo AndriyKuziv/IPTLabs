@@ -4,11 +4,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Xsl;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPTLab2
 {
@@ -21,7 +19,7 @@ namespace IPTLab2
         public long MaxFileSize { get; set; }
     }
 
-    public class EncryptingMenu
+    public class RC5CryptoMenu
     {
         private const string encryptionExtension = ".enc";
 
@@ -34,7 +32,7 @@ namespace IPTLab2
 
         public static void Open()
         {
-            EncrParams encrParams = FileWorksRC.ReadConfig(configName);
+            EncrParams encrParams = RC5.ReadConfig(configName);
             if (encrParams is null)
             {
                 Console.WriteLine("Default parameters will be used instead");
@@ -108,7 +106,7 @@ namespace IPTLab2
 
             Console.WriteLine("\nSaving encrypted file...\n");
             string newFilename = filename + encryptionExtension;
-            FileWorksRC.SaveFile(ct, newFilename);
+            FileWorksCrypto.SaveFile(ct, newFilename);
         }
 
         public static void DecryptFile()
@@ -138,7 +136,7 @@ namespace IPTLab2
 
             Console.WriteLine("\nSaving decrypted file...\n");
             string newFilename = "decoded_" + filename.Substring(0, filename.Length - encryptionExtension.Length);
-            FileWorksRC.SaveFile(pt, newFilename);
+            FileWorksCrypto.SaveFile(pt, newFilename);
         }
 
     }
@@ -189,7 +187,6 @@ namespace IPTLab2
 
             S = new uint[t];
 
-            // Initialize S with a magic constant Pw and Qw
             uint Pw = 0xb7e15163;
             uint Qw = 0x9e3779b9;
 
@@ -199,7 +196,6 @@ namespace IPTLab2
                 S[kk] = S[kk - 1] + Qw;
             }
 
-            // Key Expansion
             int iA = 0;
             int iB = 0;
             uint[] L = new uint[c * 3];
@@ -234,7 +230,7 @@ namespace IPTLab2
 
         public byte[] EncryptFile(string filename)
         {
-            var pt = FileWorksRC.ReadFile(filename);
+            var pt = FileWorksCrypto.ReadFile(filename);
 
             int paddedLength = (pt.Length % blockSize == 0) ? pt.Length : 
                 pt.Length + (blockSize - (pt.Length % blockSize));
@@ -264,7 +260,7 @@ namespace IPTLab2
                 byte[] encryptedBlock = Encrypt(currBlock);
                 encryptedBlock.CopyTo(prevBlock, 0);
 
-                //Array.Copy(encryptedBlock, 0, encryptedData, i, blockSize);
+
                 encryptedBlock.CopyTo(encryptedData, i + blockSize);
             }
 
@@ -293,7 +289,7 @@ namespace IPTLab2
 
         public byte[] DecryptFile(string filename)
         {
-            var ct = FileWorksRC.ReadFile(filename);
+            var ct = FileWorksCrypto.ReadFile(filename);
 
             byte[] iv = new byte[blockSize];
             Array.Copy(ct, 0, iv, 0, blockSize);
@@ -345,10 +341,7 @@ namespace IPTLab2
         {
             return RandGen.GenerBytes(pars, length);
         }
-    }
 
-    public static class FileWorksRC
-    {
         public static EncrParams ReadConfig(string filename)
         {
             if (!File.Exists(filename))
@@ -367,7 +360,10 @@ namespace IPTLab2
 
             return pars;
         }
+    }
 
+    public static class FileWorksCrypto
+    {
         public static byte[] ReadFile(string filepath)
         {
             return File.ReadAllBytes(filepath);
@@ -378,6 +374,12 @@ namespace IPTLab2
             File.WriteAllBytes(filename, bytes);
 
             Console.WriteLine("Result has been saved to the file \"" + filename + "\" successfully");
+        }
+
+        public static void SaveJsonFile(object obj, string name)
+        {
+            var jsonString = JsonConvert.SerializeObject(obj);
+            File.WriteAllText(name + ".json", jsonString);
         }
     }
 }
