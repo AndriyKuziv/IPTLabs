@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -21,7 +22,8 @@ namespace IPTLab2
 
     public class RC5CryptoMenu
     {
-        private const string encryptionExtension = ".enc";
+        private const string encryptionExtension = ".rcf";
+        private const string prefix = "RC5decoded_";
 
         private static string configName = "encrVal.json";
 
@@ -29,6 +31,8 @@ namespace IPTLab2
         private static int wordSize = 32;
         private static int rounds = 20;
         private static int keySize = 16;
+
+        private static Stopwatch timer = new Stopwatch();
 
         public static void Open()
         {
@@ -49,14 +53,20 @@ namespace IPTLab2
 
             while (answer != "0")
             {
-                Console.Write("\nDo you want to ecnrypt a file(1), decrypt(2) or exit(0)? | ");
+                Console.Write("---------------\n" +
+                    "1 - encrypt a file\n" +
+                    "2 - decrypt a file\n" +
+                    "0 - exit\n");
                 answer = Console.ReadLine();
 
                 string[] answers = { "1", "2", "0" };
                 while (!answers.Contains(answer))
                 {
                     Console.WriteLine("Please enter a valid answer");
-                    Console.Write("\nDo you want to ecnrypt a file(1), decrypt(2) or exit(0)? | ");
+                    Console.Write("---------------\n" +
+                        "1 - encrypt a file\n" +
+                        "2 - decrypt a file\n" +
+                        "0 - exit\n");
                     answer = Console.ReadLine();
                 }
 
@@ -102,9 +112,24 @@ namespace IPTLab2
             password = HashingAlgo.HashText(password);
 
             RC5 rc = new RC5(password, wordSize, rounds, keySize);
-            var ct = rc.EncryptFile(filename);
 
-            Console.WriteLine("\nSaving encrypted file...\n");
+            timer.Start();
+
+            var ct = rc.EncryptFile(filename);
+            if (ct is null)
+            {
+                Console.WriteLine("File was not encrypted");
+                return;
+            }
+
+            timer.Stop();
+
+            TimeSpan timeTaken = timer.Elapsed;
+            string time = timeTaken.ToString(@"m\:ss\.fff");
+            Console.WriteLine("Time taken for encryption: " + time);
+            timer.Reset();
+
+            Console.WriteLine($"\n| Time taken for encryption: {time} |");
             string newFilename = filename + encryptionExtension;
             FileWorksCrypto.SaveFile(ct, newFilename);
         }
@@ -132,10 +157,25 @@ namespace IPTLab2
             password = HashingAlgo.HashText(password);
 
             RC5 rc = new RC5(password, wordSize, rounds, keySize);
+
+            timer.Start();
+
             var pt = rc.DecryptFile(filename);
+            if (pt is null)
+            {
+                Console.WriteLine("File was not decrypted");
+                return;
+            }
+
+            timer.Stop();
+
+            TimeSpan timeTaken = timer.Elapsed;
+            string time = timeTaken.ToString(@"m\:ss\.fff");
+            Console.WriteLine($"\n| Time taken for decryption: {time} |");
+            timer.Reset();
 
             Console.WriteLine("\nSaving decrypted file...\n");
-            string newFilename = "decoded_" + filename.Substring(0, filename.Length - encryptionExtension.Length);
+            string newFilename = prefix + filename.Substring(0, filename.Length - encryptionExtension.Length);
             FileWorksCrypto.SaveFile(pt, newFilename);
         }
 
@@ -373,7 +413,7 @@ namespace IPTLab2
         {
             File.WriteAllBytes(filename, bytes);
 
-            Console.WriteLine("Result has been saved to the file \"" + filename + "\" successfully");
+            Console.WriteLine("\n| Result has been saved to the file \"" + filename + "\" successfully |");
         }
 
         public static void SaveJsonFile(object obj, string name)

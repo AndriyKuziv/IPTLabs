@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using System.CodeDom.Compiler;
+using System.Diagnostics;
 
 namespace IPTLab2
 {
@@ -17,12 +18,15 @@ namespace IPTLab2
 
     public static class RSACryptoMenu
     {
-        private const string encryptionExtension = ".enc";
+        private const string encryptionExtension = ".rsa";
+        private const string prefix = "RSAdecoded_";
 
         private static int maxFileSize = 5;
         private const int megaByte = 1_048_576;
 
         private static RSACrypto rsaCrypto;
+
+        private static Stopwatch timer = new Stopwatch();
 
         public static void Open()
         {
@@ -35,8 +39,9 @@ namespace IPTLab2
 
             while (answer != "0")
             {
-                Console.Write("\n1 - encrypt a file\n" +
-                    "2 - decrypt\n" +
+                Console.Write("---------------\n" +
+                    "1 - encrypt a file\n" +
+                    "2 - decrypt a file\n" +
                     "3 - generate new key pair\n" +
                     "4 - read existing keys from file\n" +
                     "0 - exit\n");
@@ -46,7 +51,8 @@ namespace IPTLab2
                 while (!answers.Contains(answer))
                 {
                     Console.WriteLine("Please enter a valid answer");
-                    Console.Write("\n1 - encrypt a file\n" +
+                    Console.Write("---------------\n" +
+                     "1 - encrypt a file\n" +
                      "2 - decrypt a file\n" +
                      "3 - generate new key pair\n" +
                      "4 - read existing keys from file\n" +
@@ -94,12 +100,23 @@ namespace IPTLab2
             {
                 rsaCrypto = new RSACrypto();
             }
+
+            timer.Start();
+
             var ct = rsaCrypto.EncryptFile(filename);
+
+            timer.Stop();
+            
             if(ct is null)
             {
                 Console.WriteLine("File was not encrypted");
                 return;
             }
+
+            TimeSpan timeTaken = timer.Elapsed;
+            string time = timeTaken.ToString(@"m\:ss\.fff");
+            Console.WriteLine($"\n| Time taken for encryption: {time} |");
+            timer.Reset();
 
             Console.WriteLine("\nSaving encrypted file...\n");
             string newFilename = filename + encryptionExtension;
@@ -128,15 +145,26 @@ namespace IPTLab2
             {
                 rsaCrypto = new RSACrypto();
             }
+
+            timer.Start();
+
             var pt = rsaCrypto.DecryptFile(filename);
+
+            timer.Stop();
+
             if (pt is null)
             {
-                Console.WriteLine("File was not decrypted");
+                Console.WriteLine("\nFile was not decrypted");
                 return;
             }
 
-            Console.WriteLine("\nSaving decrypted file...\n");
-            string newFilename = "decoded_" + filename.Substring(0, filename.Length - encryptionExtension.Length);
+            TimeSpan timeTaken = timer.Elapsed;
+            string time = timeTaken.ToString(@"m\:ss\.fff");
+            Console.WriteLine($"\n| Time taken for decryption: {time} |");
+            timer.Reset();
+
+            Console.WriteLine("\nSaving decrypted file...");
+            string newFilename = prefix + filename.Substring(0, filename.Length - encryptionExtension.Length);
             FileWorksCrypto.SaveFile(pt, newFilename);
         }
 
@@ -196,7 +224,7 @@ namespace IPTLab2
             publicKey = pars.publicKey;
             privateKey = pars.privateKey;
             
-            Console.WriteLine("Public and private keys have been set");
+            Console.WriteLine("\n| Public and private keys have been set |");
         }
 
         public void GenerateKeys()
@@ -207,7 +235,7 @@ namespace IPTLab2
                 publicKey = rsa.ToXmlString(false);
 
                 SaveKeys(publicKey, privateKey);
-                Console.WriteLine("New public and private keys have been generated and saved");
+                Console.WriteLine("\n| New public and private keys have been generated and saved |");
             }
         }
 

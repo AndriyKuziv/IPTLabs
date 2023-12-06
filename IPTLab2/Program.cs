@@ -5,8 +5,7 @@ string answer = "";
 
 while(answer != "0")
 {
-    //Console.Write("Generate a set(1), Generate hash(2), Encrypt or decrypt a file(3), exit(0) | ");
-    Console.Write("1 - Generate a set;\n" +
+    Console.Write("\n1 - Generate a set;\n" +
     "2 - Generate hash\n" +
     "3 - Encrypt/decrypt a file using RC5\n" +
     "4 - Encrypt/decrypt a file using RSA\n");
@@ -17,8 +16,7 @@ while(answer != "0")
     while (!allowed.Contains(answer))
     {
         Console.WriteLine("Please enter valid answer");
-        //Console.Write("Generate a set(1), Generate hash(2), Encrypt or decrypt a file(3), exit(0) | ");
-        Console.Write("1 - Generate a set;\n" +
+        Console.Write("\n1 - Generate a set;\n" +
             "2 - Generate hash\n" +
             "3 - Encrypt/decrypt a file using RC5\n" +
             "4 - Encrypt/decrypt a file using RSA\n");
