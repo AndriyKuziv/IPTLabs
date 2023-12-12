@@ -20,26 +20,11 @@ namespace IPTLab2.Algorithms
 
         private uint[] S;
 
-        public RCFive(byte[] key)
-        {
-            if (key.Length != keySize) Setup(key[..keySize]);
-            else Setup(key);
-        }
-
-        public RCFive(string password)
-        {
-            byte[] key = Encoding.UTF8.GetBytes(password);
-
-            if (key.Length != keySize) Setup(key[..keySize]);
-            else Setup(key);
-        }
-
         public RCFive(string password, int wordSize, int rounds, int keySize)
         {
             byte[] key = Encoding.UTF8.GetBytes(password);
 
             if (key.Length != keySize) key = key[..keySize];
-            else Setup(key);
 
             Setup(key);
 
@@ -100,14 +85,19 @@ namespace IPTLab2.Algorithms
         public byte[] EncryptFile(string filename)
         {
             var pt = FileWorksCrypto.ReadFile(filename);
+            var genPars = FileWorksRandGen.ReadConfig(RandGenMenu.configFilePath);
 
+            return ExecuteEncryption(pt, genPars);
+        }
+
+        public byte[] ExecuteEncryption(byte[] pt, GeneratorParams genPars)
+        {
             int paddedLength = (pt.Length % blockSize == 0) ? pt.Length :
                 pt.Length + (blockSize - (pt.Length % blockSize));
 
             byte[] paddedData = new byte[paddedLength];
             Array.Copy(pt, paddedData, pt.Length);
 
-            var genPars = FileWorksRandGen.ReadConfig(RandGenMenu.configFilePath);
             byte[] iv = GetIV(genPars, blockSize);
 
             byte[] encryptedData = new byte[paddedLength + blockSize];
@@ -135,6 +125,7 @@ namespace IPTLab2.Algorithms
 
             return encryptedData;
         }
+
         private byte[] Encrypt(byte[] block)
         {
             uint A = BitConverter.ToUInt32(block, 0);
@@ -160,6 +151,11 @@ namespace IPTLab2.Algorithms
         {
             var ct = FileWorksCrypto.ReadFile(filename);
 
+            return ExecuteDecryption(ct);
+        }
+
+        public byte[] ExecuteDecryption(byte[] ct)
+        {
             byte[] iv = new byte[blockSize];
             Array.Copy(ct, 0, iv, 0, blockSize);
 
@@ -185,6 +181,7 @@ namespace IPTLab2.Algorithms
 
             return decryptedData;
         }
+
         private byte[] Decrypt(byte[] block)
         {
             uint A = BitConverter.ToUInt32(block, 0);
@@ -209,25 +206,6 @@ namespace IPTLab2.Algorithms
         private byte[] GetIV(GeneratorParams pars, long length)
         {
             return RandGen.GenerBytes(pars, length);
-        }
-
-        public static RCFiveParams ReadConfig(string filename)
-        {
-            if (!File.Exists(filename))
-            {
-                Console.WriteLine("Warning! Config file was not found");
-                return null;
-            }
-
-            using StreamReader r = new StreamReader(filename);
-            var json = r.ReadToEnd();
-            RCFiveParams? pars = JsonConvert.DeserializeObject<RCFiveParams>(json);
-            if (pars is null)
-            {
-                Console.WriteLine("Warning! Required parameters are missing");
-            }
-
-            return pars;
         }
     }
 }

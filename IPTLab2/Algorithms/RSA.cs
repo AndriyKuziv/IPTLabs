@@ -93,6 +93,11 @@ namespace IPTLab2.Algorithms
 
             byte[] bytes = FileWorksCrypto.ReadFile(filename);
 
+            return ExecuteEncryption(bytes);
+        }
+
+        public byte[] ExecuteEncryption(byte[] bytes)
+        {
             // Getting a signature
             byte[] bytesHash = Encoding.UTF8.GetBytes(MDFive.HashArray(bytes));
             byte[] signature = DigitSign.SignData(bytesHash, privateKey);
@@ -148,6 +153,11 @@ namespace IPTLab2.Algorithms
 
             byte[] bytes = FileWorksCrypto.ReadFile(filename);
 
+            return ExecuteDecryption(bytes);
+        }
+
+        public byte[] ExecuteDecryption(byte[] bytes)
+        {
             // Getting a length of a signature
             byte[] lenBytes = bytes[0..4];
             if (BitConverter.IsLittleEndian)

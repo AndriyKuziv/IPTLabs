@@ -16,17 +16,6 @@ namespace IPTLab2.Algorithms
             return SignData(data, privateKey);
         }
 
-        public static byte[] SignData(byte[] data, RSAParameters privateKey)
-        {
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-            {
-                rsa.ImportParameters(privateKey);
-
-                byte[] signature = rsa.SignData(data, new SHA256CryptoServiceProvider());
-                return signature;
-            }
-        }
-
         public static byte[] SignData(byte[] data, string privateKey)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -35,17 +24,6 @@ namespace IPTLab2.Algorithms
 
                 byte[] signature = rsa.SignData(data, new SHA256CryptoServiceProvider());
                 return signature;
-            }
-        }
-
-        public static bool VerifySignature(byte[] data, byte[] signature, RSAParameters publicKey)
-        {
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-            {
-                rsa.ImportParameters(publicKey);
-
-                bool isSignatureValid = rsa.VerifyData(data, new SHA256CryptoServiceProvider(), signature);
-                return isSignatureValid;
             }
         }
 

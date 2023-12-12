@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPTLab2", "IPTLab2\IPTLab2.csproj", "{57FE6702-A1D4-46D1-9839-0E10B2D2084E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPTLab2", "IPTLab2\IPTLab2.csproj", "{57FE6702-A1D4-46D1-9839-0E10B2D2084E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPTLabs.Tests", "IPTLabs.Tests\IPTLabs.Tests.csproj", "{003B34AD-5FDB-49E2-A812-A16AC02C5C65}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{57FE6702-A1D4-46D1-9839-0E10B2D2084E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57FE6702-A1D4-46D1-9839-0E10B2D2084E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57FE6702-A1D4-46D1-9839-0E10B2D2084E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{003B34AD-5FDB-49E2-A812-A16AC02C5C65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{003B34AD-5FDB-49E2-A812-A16AC02C5C65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{003B34AD-5FDB-49E2-A812-A16AC02C5C65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{003B34AD-5FDB-49E2-A812-A16AC02C5C65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

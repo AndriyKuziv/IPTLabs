@@ -1,6 +1,7 @@
 ﻿using IPTLab2.Algorithms;
 using IPTLab2.Data;
 using IPTLab2.FileWorks;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,7 +27,7 @@ namespace IPTLab2.Menus
 
         public static void Open()
         {
-            RCFiveParams encrParams = RCFive.ReadConfig(configName);
+            RCFiveParams encrParams = ReadConfig(configName);
             if (encrParams is null)
             {
                 Console.WriteLine("Default parameters will be used instead");
@@ -167,6 +168,25 @@ namespace IPTLab2.Menus
             Console.WriteLine("\nSaving decrypted file...\n");
             string newFilename = prefix + filename.Substring(0, filename.Length - encryptionExtension.Length);
             FileWorksCrypto.SaveFile(pt, newFilename);
+        }
+
+        public static RCFiveParams ReadConfig(string filename)
+        {
+            if (!File.Exists(filename))
+            {
+                Console.WriteLine("Warning! Config file was not found");
+                return null;
+            }
+
+            using StreamReader r = new StreamReader(filename);
+            var json = r.ReadToEnd();
+            RCFiveParams? pars = JsonConvert.DeserializeObject<RCFiveParams>(json);
+            if (pars is null)
+            {
+                Console.WriteLine("Warning! Required parameters are missing");
+            }
+
+            return pars;
         }
     }
 }
