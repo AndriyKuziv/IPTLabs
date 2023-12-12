@@ -1,4 +1,5 @@
 ﻿using IPTLab2;
+using IPTLab2.Menus;
 using System.Text;
 
 string answer = "";
@@ -30,10 +31,10 @@ while(answer != "0")
             RandGenMenu.Open();
             break;
         case "2":
-            HashingMenu.Open();
+            MDFiveMenu.Open();
             break;
         case "3":
-            RC5CryptoMenu.Open();
+            RCFiveCryptoMenu.Open();
             break;
         case "4":
             RSACryptoMenu.Open();

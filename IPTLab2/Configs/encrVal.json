@@ -1,0 +1,6 @@
+{
+   "WordSize": 32,
+   "Rounds": 20,
+   "KeySize": 16,
+   "MaxFileSize": 10
+}

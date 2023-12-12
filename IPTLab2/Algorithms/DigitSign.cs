@@ -5,38 +5,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IPTLab2
+namespace IPTLab2.Algorithms
 {
-
-    public class DigSign
+    public class DigitSign
     {
-        public static void start()
-        {
-            // Create a new instance of DSACryptoServiceProvider
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-            {
-                // Generate a key pair (public and private key)
-                RSAParameters privateKey = rsa.ExportParameters(true);
-                RSAParameters publicKey = rsa.ExportParameters(false);
-
-                // Message to be signed
-                string messageToSign = "Hello, Digital Signature!";
-
-                // Convert the message to a byte array
-                byte[] messageBytes = Encoding.UTF8.GetBytes(messageToSign);
-
-                // Create a digital signature
-                byte[] signature = SignData(messageBytes, rsa.ToXmlString(true));
-
-                Console.WriteLine("Original Message: " + messageToSign);
-                Console.WriteLine("Digital Signature: " + Convert.ToBase64String(signature));
-
-                // Verify the signature
-                bool isSignatureValid = VerifySignature(messageBytes, signature, publicKey);
-                Console.WriteLine("Signature Verification: " + isSignatureValid);
-            }
-        }
-
         public static byte[] GenerSignForString(string text, string privateKey)
         {
             byte[] data = Encoding.UTF8.GetBytes(text);
