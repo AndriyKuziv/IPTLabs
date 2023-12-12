@@ -193,8 +193,8 @@ namespace IPTLab2
         private static int keySize = 4096;
         private static string keyPairName = "keyPair.json";
 
-        private static string publicKey;
-        private static string privateKey;
+        private string publicKey;
+        private string privateKey;
 
         public RSACrypto()
         {
@@ -271,7 +271,27 @@ namespace IPTLab2
 
             byte[] bytes = FileWorksCrypto.ReadFile(filename);
 
-            byte[] res = Encrypt(publicKey, bytes);
+            // Getting a signature
+            byte[] bytesHash = Encoding.UTF8.GetBytes(HashingAlgo.HashArray(bytes));
+            byte[] signature = DigSign.SignData(bytesHash, privateKey);
+            Console.WriteLine("File signature: " + Convert.ToBase64String(signature));
+
+            // Getting bytes of a length of a signature
+            int len = signature.Length;
+            byte[] lenBytes = BitConverter.GetBytes(len);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(lenBytes);
+            }
+
+            byte[] ct = Encrypt(publicKey, bytes);
+
+            // Creating a final bytes array
+            byte[] res = new byte[lenBytes.Length + signature.Length + ct.Length];
+
+            lenBytes.CopyTo(res, 0);
+            signature.CopyTo(res, lenBytes.Length);
+            ct.CopyTo(res, lenBytes.Length + signature.Length);
 
             return res;
         }
@@ -306,7 +326,25 @@ namespace IPTLab2
 
             byte[] bytes = FileWorksCrypto.ReadFile(filename);
 
-            byte[] res = Decrypt(privateKey, bytes);
+            // Getting a length of a signature
+            byte[] lenBytes = bytes[0..4];
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(lenBytes);
+            }
+
+            int len = BitConverter.ToInt32(lenBytes, 0);
+
+            // Getting a signature
+            int endIndex = len + 4;
+            byte[] signature = bytes[4..endIndex];
+            Console.WriteLine("Signature from an encrypted file: " + Convert.ToBase64String(signature));
+
+            byte[] res = Decrypt(privateKey, bytes[endIndex..]);
+
+            byte[] resHash = Encoding.UTF8.GetBytes(HashingAlgo.HashArray(res));
+            var isValidated = DigSign.VerifySignature(resHash, signature, publicKey);
+            Console.WriteLine("| Is Validated: {0} |", isValidated);
 
             return res;
         }

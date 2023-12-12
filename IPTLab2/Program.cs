@@ -19,7 +19,8 @@ while(answer != "0")
         Console.Write("\n1 - Generate a set;\n" +
             "2 - Generate hash\n" +
             "3 - Encrypt/decrypt a file using RC5\n" +
-            "4 - Encrypt/decrypt a file using RSA\n");
+            "4 - Encrypt/decrypt a file using RSA" +
+            "0 - Exit\n");
         answer = Console.ReadLine();
     }
 

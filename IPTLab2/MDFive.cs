@@ -145,6 +145,13 @@ namespace IPTLab2
             return HashBitArray(msgBE);
         }
 
+        public static string HashArray(byte[] bytes)
+        {
+            BitArray msgLE = new BitArray(bytes);
+            BitArray msgBE = Utility.ToBigEndian(msgLE);
+            return HashBitArray(msgBE);
+        }
+
         // Main
         private static string HashBitArray(BitArray bitArrayBE)
         {
