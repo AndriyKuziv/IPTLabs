@@ -3,6 +3,7 @@ using IPTLab2.Algorithms;
 
 namespace IPTLabs.Tests.Algorithms
 {
+    [TestFixture]
     public class RandGenTests
     {
         private GeneratorParams _genParams { get; set; }

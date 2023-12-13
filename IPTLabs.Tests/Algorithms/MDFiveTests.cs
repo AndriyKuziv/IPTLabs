@@ -4,6 +4,7 @@ using NUnit.Framework;
 
 namespace IPTLabs.Tests.Algorithms
 {
+    [TestFixture]
     public class MDFiveTests
     {
         private string message = "Hello there";

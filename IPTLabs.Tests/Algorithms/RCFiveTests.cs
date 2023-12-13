@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 
 namespace IPTLabs.Tests.Algorithms
 {
+    [TestFixture]
     public class RCFiveTests
     {
         private GeneratorParams _genParams { get; set; }

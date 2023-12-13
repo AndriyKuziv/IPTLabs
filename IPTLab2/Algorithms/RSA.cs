@@ -15,13 +15,13 @@ namespace IPTLab2.Algorithms
         private static int keySize = 4096;
         private static string keyPairName = "keyPair.json";
 
-        private string publicKey;
-        private string privateKey;
+        public string PublicKey { get; set; }
+        public string PrivateKey { get; set; }
 
         public RSA()
         {
             ReadKeys(keyPairName);
-            if (publicKey is null || privateKey is null)
+            if (PublicKey is null || PrivateKey is null)
             {
                 Console.WriteLine("Warning! One or more keys were not set. Please specify a file containing a key pair or " +
                     "generate a new one");
@@ -43,8 +43,8 @@ namespace IPTLab2.Algorithms
             {
                 Console.WriteLine("Warning! Some keys are missing");
             }
-            publicKey = pars.publicKey;
-            privateKey = pars.privateKey;
+            PublicKey = pars.publicKey;
+            PrivateKey = pars.privateKey;
 
             Console.WriteLine("\n| Public and private keys have been set |");
         }
@@ -53,15 +53,15 @@ namespace IPTLab2.Algorithms
         {
             using (var rsa = new RSACryptoServiceProvider(keySize))
             {
-                privateKey = rsa.ToXmlString(true);
-                publicKey = rsa.ToXmlString(false);
+                PrivateKey = rsa.ToXmlString(true);
+                PublicKey = rsa.ToXmlString(false);
 
-                SaveKeys(publicKey, privateKey);
+                SaveKeys(PublicKey, PrivateKey);
                 Console.WriteLine("\n| New public and private keys have been generated and saved |");
             }
         }
 
-        private void SaveKeys(string publicKey, string privateKey)
+        private void SaveKeys(string PublicKey, string PrivateKey)
         {
             string name = "keyPair";
             int num = 1;
@@ -78,14 +78,14 @@ namespace IPTLab2.Algorithms
 
             FileWorksCrypto.SaveJsonFile(new KeyPair
             {
-                privateKey = privateKey,
-                publicKey = publicKey
+                privateKey = PrivateKey,
+                publicKey = PublicKey
             }, name);
         }
 
         public byte[] EncryptFile(string filename)
         {
-            if (string.IsNullOrEmpty(publicKey))
+            if (string.IsNullOrEmpty(PublicKey))
             {
                 Console.WriteLine("Error! Public key is not set");
                 return null;
@@ -100,7 +100,7 @@ namespace IPTLab2.Algorithms
         {
             // Getting a signature
             byte[] bytesHash = Encoding.UTF8.GetBytes(MDFive.HashArray(bytes));
-            byte[] signature = DigitSign.SignData(bytesHash, privateKey);
+            byte[] signature = DigitSign.SignData(bytesHash, PrivateKey);
             Console.WriteLine("File signature: " + Convert.ToBase64String(signature));
 
             // Getting bytes of a length of a signature
@@ -111,7 +111,7 @@ namespace IPTLab2.Algorithms
                 Array.Reverse(lenBytes);
             }
 
-            byte[] ct = Encrypt(publicKey, bytes);
+            byte[] ct = Encrypt(PublicKey, bytes);
 
             // Creating a final bytes array
             byte[] res = new byte[lenBytes.Length + signature.Length + ct.Length];
@@ -123,11 +123,11 @@ namespace IPTLab2.Algorithms
             return res;
         }
 
-        public byte[] Encrypt(string publicKey, byte[] data)
+        public byte[] Encrypt(string PublicKey, byte[] data)
         {
             using (var rsa = new RSACryptoServiceProvider())
             {
-                rsa.FromXmlString(publicKey);
+                rsa.FromXmlString(PublicKey);
 
                 int maxDataLen = (rsa.KeySize / 8) - 42;
                 List<byte> encrypted = new List<byte>();
@@ -145,7 +145,7 @@ namespace IPTLab2.Algorithms
 
         public byte[] DecryptFile(string filename)
         {
-            if (string.IsNullOrEmpty(privateKey))
+            if (string.IsNullOrEmpty(PrivateKey))
             {
                 Console.WriteLine("Error! Private key is not set");
                 return null;
@@ -172,20 +172,20 @@ namespace IPTLab2.Algorithms
             byte[] signature = bytes[4..endIndex];
             Console.WriteLine("Signature from an encrypted file: " + Convert.ToBase64String(signature));
 
-            byte[] res = Decrypt(privateKey, bytes[endIndex..]);
+            byte[] res = Decrypt(PrivateKey, bytes[endIndex..]);
 
             byte[] resHash = Encoding.UTF8.GetBytes(MDFive.HashArray(res));
-            var isValidated = DigitSign.VerifySignature(resHash, signature, publicKey);
+            var isValidated = DigitSign.VerifySignature(resHash, signature, PublicKey);
             Console.WriteLine("| Is Validated: {0} |", isValidated);
 
             return res;
         }
 
-        public byte[] Decrypt(string privateKey, byte[] data)
+        public byte[] Decrypt(string PrivateKey, byte[] data)
         {
             using (var rsa = new RSACryptoServiceProvider())
             {
-                rsa.FromXmlString(privateKey);
+                rsa.FromXmlString(PrivateKey);
                 int dataLen = rsa.KeySize / 8;
                 List<byte> decrypted = new List<byte>();
 
